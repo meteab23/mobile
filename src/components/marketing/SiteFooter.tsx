@@ -60,7 +60,7 @@ export function SiteFooter() {
         </div>
         <div className="mt-14 flex flex-col gap-3 border-t border-line pt-6 text-sm text-muted md:flex-row md:items-center md:justify-between">
           <p>© {new Date().getFullYear()} Stride Payments. Built for modern B2B.</p>
-          <p>Designed with clarity—Billie structure, OpenAI restraint.</p>
+          <p>Pay Later · Pay in X · Pay on Account</p>
         </div>
       </div>
     </footer>

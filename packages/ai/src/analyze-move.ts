@@ -1,17 +1,21 @@
 import type { AIProvider, AnalysisInput, MoveAnalysis } from "./types.js";
 
-const SYSTEM_PROMPT = `You are a financial market analyst assistant for a day trading education app.
-Analyze the provided market data ONLY. Do not invent news or financial figures not present in the input.
-Return valid JSON matching this schema exactly:
+const SYSTEM_PROMPT = `You are an expert day trading analyst for an educational app.
+Use ONLY the data provided. Synthesize technical analysis (S/R, candlesticks, ORB+VWAP, EMA, volume) with fundamentals and news.
+Return valid JSON:
 {
-  "moveSummary": { "direction": "bullish"|"bearish"|"neutral", "magnitude": string, "summary": string },
+  "moveSummary": { "direction": "bullish"|"bearish"|"neutral", "magnitude": string, "summary": string, "forecast": string },
   "primaryDrivers": [{ "driver": string, "detail": string, "source": string|null }],
   "fundamentalsSnapshot": { "revenueTrend": string|null, "margins": string|null, "valuation": string|null, "notes": string|null },
-  "technicalRead": { "vwapPosition": string, "orbStatus": string, "rsi": number, "strategyAlignment": string },
+  "technicalRead": {
+    "vwapPosition": string, "orbStatus": string, "rsi": number, "strategyAlignment": string,
+    "supportResistance": string, "candlePattern": string, "directionForecast": string, "compositeScore": number
+  },
+  "tradePlan": { "action": string, "entry": number, "stopLoss": number, "takeProfit1": number, "takeProfit2": number, "riskReward": string },
   "risksAndCaveats": [string],
   "sources": [{ "title": string, "url": string }]
 }
-Be concise. This is educational analysis, not financial advice.`;
+Educational only, not financial advice. Be specific about S/R levels and candle patterns from the input.`;
 
 function buildUserPrompt(input: AnalysisInput): string {
   return JSON.stringify(
@@ -31,6 +35,7 @@ function buildUserPrompt(input: AnalysisInput): string {
         priceVsVwap: input.price > input.vwap ? "above" : "below",
         openingRange: input.openingRange,
       },
+      dayStrategy: input.dayStrategy,
       news: input.news.slice(0, 8),
       financials: input.financials.slice(0, 4),
     },
@@ -98,18 +103,29 @@ async function callAnthropic(prompt: string, apiKey: string): Promise<string> {
 }
 
 function fallbackAnalysis(input: AnalysisInput): MoveAnalysis {
+  const ds = input.dayStrategy;
   const direction =
-    input.changePercent > 0.5
+    ds?.direction === "up"
       ? "bullish"
-      : input.changePercent < -0.5
+      : ds?.direction === "down"
         ? "bearish"
-        : "neutral";
+        : input.changePercent > 0.5
+          ? "bullish"
+          : input.changePercent < -0.5
+            ? "bearish"
+            : "neutral";
 
   return {
     moveSummary: {
       direction,
       magnitude: `${input.changePercent >= 0 ? "+" : ""}${input.changePercent.toFixed(2)}%`,
-      summary: `${input.ticker} is ${direction} today with a ${input.gapPercent.toFixed(2)}% gap and ${input.relativeVolume.toFixed(1)}x relative volume. Configure an AI provider API key for deeper analysis.`,
+      summary: ds?.summary ?? `${input.ticker} technical and fundamental snapshot.`,
+      forecast:
+        ds?.direction === "up"
+          ? `Bias toward resistance $${ds.nearestResistance?.toFixed(2) ?? "N/A"}`
+          : ds?.direction === "down"
+            ? `Risk toward support $${ds.nearestSupport?.toFixed(2) ?? "N/A"}`
+            : "Sideways until S/R break",
     },
     primaryDrivers: input.news.slice(0, 3).map((n) => ({
       driver: n.sentiment ?? "news",
@@ -128,17 +144,27 @@ function fallbackAnalysis(input: AnalysisInput): MoveAnalysis {
         ? `OR High: ${input.openingRange.high.toFixed(2)}, Low: ${input.openingRange.low.toFixed(2)}`
         : "Opening range forming",
       rsi: input.rsi,
-      strategyAlignment:
-        input.price > input.vwap && input.rsi >= 40 && input.rsi <= 70
-          ? "Aligned with ORB+VWAP long criteria"
-          : "No clear ORB+VWAP alignment",
+      strategyAlignment: ds?.summary ?? "Multi-strategy analysis available",
+      supportResistance: ds
+        ? `Support $${ds.nearestSupport?.toFixed(2)} / Resistance $${ds.nearestResistance?.toFixed(2)}`
+        : undefined,
+      candlePattern: ds?.candlePattern ?? "none",
+      directionForecast: ds?.direction ?? "sideways",
+      compositeScore: ds?.compositeScore,
     },
+    tradePlan: ds?.evenRisk
+      ? {
+          action: ds.action,
+          entry: ds.evenRisk.entry,
+          stopLoss: ds.evenRisk.stopLoss,
+          takeProfit1: ds.evenRisk.takeProfit1,
+          takeProfit2: ds.evenRisk.takeProfit2,
+          riskReward: "1:1 and 1:2 even risk",
+        }
+      : undefined,
     risksAndCaveats: [
-      "This is educational analysis, not financial advice.",
-      input.session !== "regular"
-        ? "Extended hours — lower liquidity and wider spreads."
-        : "Standard session liquidity.",
-      "Past performance does not guarantee future results.",
+      "Educational analysis only — not financial advice.",
+      input.session !== "regular" ? "Extended hours — wider spreads." : "Regular session.",
     ],
     sources: input.news.map((n) => ({ title: n.title, url: n.url })),
   };

@@ -24,6 +24,12 @@ interface BuyRecommendation {
   reason: string;
   strategySignal: string;
   checklist: string[];
+  direction?: "up" | "down" | "sideways";
+  compositeScore?: number;
+  nearestSupport?: number;
+  nearestResistance?: number;
+  candlePattern?: string;
+  strategyScores?: Array<{ name: string; score: number; bias: string; detail: string }>;
 }
 
 interface BuySignalsResponse {
@@ -73,7 +79,7 @@ export function BuySignalsTab() {
         <div>
           <h1 className="text-xl font-bold text-zinc-100">Buy Signal Scanner</h1>
           <p className="mt-0.5 text-sm text-zinc-500">
-            Top 10 US stocks · {data?.strategy ?? "ORB + VWAP"} strategy
+            Top 10 US stocks · Master Day Strategy (ORB, S/R, Candles, EMA, Fundamentals)
             {data?.sessionLabel && (
               <span className="ml-2 text-zinc-600">· {data.sessionLabel}</span>
             )}
@@ -198,8 +204,25 @@ function RecommendationCard({ rec }: { rec: BuyRecommendation }) {
           {rec.changePercent >= 0 ? "+" : ""}
           {rec.changePercent.toFixed(2)}%
         </span>
-        <span className="text-xs opacity-60">Signal: {rec.strategySignal}</span>
+        <span className="text-xs opacity-60">
+          {rec.direction === "up" ? "↑" : rec.direction === "down" ? "↓" : "→"}{" "}
+          Score {rec.compositeScore ?? rec.confidence}
+        </span>
       </div>
+
+      {(rec.nearestSupport != null || rec.candlePattern) && (
+        <div className="mt-2 flex flex-wrap gap-2 text-xs opacity-70">
+          {rec.nearestSupport != null && (
+            <span>S ${rec.nearestSupport.toFixed(2)}</span>
+          )}
+          {rec.nearestResistance != null && (
+            <span>R ${rec.nearestResistance.toFixed(2)}</span>
+          )}
+          {rec.candlePattern && rec.candlePattern !== "none" && (
+            <span className="capitalize">{rec.candlePattern.replace(/_/g, " ")}</span>
+          )}
+        </div>
+      )}
 
       <p className="mt-2 text-sm opacity-90">{rec.reason}</p>
 

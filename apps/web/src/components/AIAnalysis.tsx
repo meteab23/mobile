@@ -7,6 +7,7 @@ interface MoveAnalysis {
     direction: string;
     magnitude: string;
     summary: string;
+    forecast?: string;
   };
   primaryDrivers: Array<{ driver: string; detail: string; source?: string }>;
   fundamentalsSnapshot: {
@@ -20,6 +21,18 @@ interface MoveAnalysis {
     orbStatus: string;
     rsi: number;
     strategyAlignment: string;
+    supportResistance?: string;
+    candlePattern?: string;
+    directionForecast?: string;
+    compositeScore?: number;
+  };
+  tradePlan?: {
+    action: string;
+    entry: number;
+    stopLoss: number;
+    takeProfit1: number;
+    takeProfit2: number;
+    riskReward: string;
   };
   risksAndCaveats: string[];
   sources: Array<{ title: string; url: string }>;
@@ -78,6 +91,9 @@ export function AIAnalysis({ ticker }: { ticker: string }) {
               {analysis.moveSummary.direction} ({analysis.moveSummary.magnitude})
             </div>
             <p className="mt-2 text-sm text-zinc-400">{analysis.moveSummary.summary}</p>
+            {analysis.moveSummary.forecast && (
+              <p className="mt-1 text-sm text-emerald-400/80">{analysis.moveSummary.forecast}</p>
+            )}
           </div>
 
           <div className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-3">
@@ -85,10 +101,52 @@ export function AIAnalysis({ ticker }: { ticker: string }) {
             <ul className="mt-2 space-y-1 text-sm text-zinc-400">
               <li>{analysis.technicalRead.vwapPosition}</li>
               <li>{analysis.technicalRead.orbStatus}</li>
+              {analysis.technicalRead.supportResistance && (
+                <li>{analysis.technicalRead.supportResistance}</li>
+              )}
+              {analysis.technicalRead.candlePattern && (
+                <li className="capitalize">
+                  Pattern: {analysis.technicalRead.candlePattern.replace(/_/g, " ")}
+                </li>
+              )}
               <li>RSI: {analysis.technicalRead.rsi.toFixed(1)}</li>
+              {analysis.technicalRead.compositeScore != null && (
+                <li>Composite score: {analysis.technicalRead.compositeScore}/100</li>
+              )}
               <li>{analysis.technicalRead.strategyAlignment}</li>
+              {analysis.technicalRead.directionForecast && (
+                <li>Forecast: {analysis.technicalRead.directionForecast}</li>
+              )}
             </ul>
           </div>
+
+          {analysis.tradePlan && (
+            <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/5 p-3 md:col-span-2">
+              <div className="text-xs uppercase text-emerald-500">AI Trade Plan (Even Risk)</div>
+              <div className="mt-2 grid grid-cols-2 gap-3 text-sm sm:grid-cols-5">
+                <div>
+                  <span className="text-zinc-500">Action</span>
+                  <div className="font-semibold text-emerald-400">{analysis.tradePlan.action}</div>
+                </div>
+                <div>
+                  <span className="text-zinc-500">Entry</span>
+                  <div className="font-mono">${analysis.tradePlan.entry.toFixed(2)}</div>
+                </div>
+                <div>
+                  <span className="text-zinc-500">SL</span>
+                  <div className="font-mono text-red-400">${analysis.tradePlan.stopLoss.toFixed(2)}</div>
+                </div>
+                <div>
+                  <span className="text-zinc-500">TP1</span>
+                  <div className="font-mono text-emerald-400">${analysis.tradePlan.takeProfit1.toFixed(2)}</div>
+                </div>
+                <div>
+                  <span className="text-zinc-500">R:R</span>
+                  <div className="font-mono">{analysis.tradePlan.riskReward}</div>
+                </div>
+              </div>
+            </div>
+          )}
 
           {analysis.primaryDrivers.length > 0 && (
             <div className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-3 md:col-span-2">

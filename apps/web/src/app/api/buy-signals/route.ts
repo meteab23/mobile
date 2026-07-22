@@ -84,12 +84,29 @@ async function analyzeTicker(
     volume: b.v,
   }));
 
+  const financials = await withPolygonFallback(
+    () => client.getFinancials(ticker, 4),
+    [],
+    `financials-${ticker}`
+  );
+
+  const rev0 = financials[0]?.revenue;
+  const rev1 = financials[1]?.revenue;
+  const revenueGrowth =
+    rev0 && rev1 ? ((rev0 - rev1) / rev1) * 100 : undefined;
+
   return evaluateBuyRecommendation({
     ticker,
     name: details.name ?? ticker,
     candles,
     previousClose: prevClose,
     averageVolume: avgVolume,
+    fundamentals: {
+      marketCap: details.marketCap,
+      revenueGrowth,
+      netIncome: financials[0]?.netIncome,
+      sector: details.sicDescription,
+    },
   });
 }
 
@@ -212,7 +229,7 @@ export async function GET(req: NextRequest) {
       updatedAt: new Date().toISOString(),
       session: "closed",
       sessionLabel: "Demo Mode",
-      strategy: "ORB + VWAP",
+      strategy: "Master Day Strategy (ORB + S/R + Candles + EMA + Fundamentals)",
       cached: false,
     };
     return NextResponse.json(payload);
@@ -262,7 +279,7 @@ export async function GET(req: NextRequest) {
       sessionLabel: marketStatus
         ? PolygonClient.getSessionLabel(marketStatus.session)
         : undefined,
-      strategy: "ORB + VWAP",
+      strategy: "Master Day Strategy (ORB + S/R + Candles + EMA + Fundamentals)",
       summary: {
         buy: buyCount,
         wait: waitCount,
@@ -277,7 +294,7 @@ export async function GET(req: NextRequest) {
         error: err instanceof Error ? err.message : "Buy signals analysis failed",
         recommendations: getDemoRecommendations(),
         updatedAt: new Date().toISOString(),
-        strategy: "ORB + VWAP",
+        strategy: "Master Day Strategy (ORB + S/R + Candles + EMA + Fundamentals)",
         cached: false,
       },
       { status: 200 }

@@ -3,6 +3,7 @@ import { TradingChart } from "@/components/TradingChart";
 import { KeyStats } from "@/components/KeyStats";
 import { SignalPanel } from "@/components/SignalPanel";
 import { AIAnalysis } from "@/components/AIAnalysis";
+import { TechnicalAnalysisPanel } from "@/components/TechnicalAnalysisPanel";
 
 export default async function TickerPage({
   params,
@@ -22,6 +23,7 @@ export default async function TickerPage({
         <div className="flex-1 overflow-y-auto">
           <TradingChart ticker={ticker} />
           <KeyStats ticker={ticker} />
+          <TechnicalAnalysisPanel ticker={ticker} />
           <AIAnalysis ticker={ticker} />
         </div>
 

@@ -7,7 +7,7 @@ import {
   calculateRSI,
   calculateVWAP,
   barsToCandles,
-  OrbVwapStrategy,
+  analyzeDayStrategy,
 } from "@daytrading/strategy";
 import { db, initDb } from "@/lib/db";
 import { analysisCache } from "@/lib/db/schema";
@@ -113,7 +113,21 @@ export async function GET(
     try {
       bars = await client.getTodayAggregates(ticker, 1, "minute");
     } catch {
-      /* not on plan */
+      const to = new Date();
+      const from = new Date();
+      from.setDate(from.getDate() - 60);
+      try {
+        bars = await client.getAggregates(
+          ticker,
+          1,
+          "day",
+          from.toISOString().slice(0, 10),
+          to.toISOString().slice(0, 10),
+          60
+        );
+      } catch {
+        /* empty */
+      }
     }
 
     const price = snapshot?.price ?? prevClose;
@@ -129,11 +143,23 @@ export async function GET(
       1_000_000
     );
 
-    const strategy = new OrbVwapStrategy();
-    if (candles.length) {
-      strategy.evaluate(ticker, candles, prevClose, 1_000_000);
-    }
-    const state = strategy.getState(ticker);
+    const rev0 = financials[0]?.revenue;
+    const rev1 = financials[1]?.revenue;
+    const revenueGrowth =
+      rev0 && rev1 ? ((rev0 - rev1) / rev1) * 100 : undefined;
+
+    const dayStrategy = analyzeDayStrategy({
+      ticker,
+      candles,
+      previousClose: prevClose,
+      averageVolume: 1_000_000,
+      fundamentals: {
+        marketCap: details?.marketCap,
+        revenueGrowth,
+        netIncome: financials[0]?.netIncome,
+        sector: details?.sicDescription,
+      },
+    });
 
     const analysis = await analyzeMove(
       {
@@ -145,7 +171,13 @@ export async function GET(
         vwap,
         rsi,
         session: marketStatus.session,
-        openingRange: state?.openingRange ?? null,
+        openingRange: dayStrategy.supportResistance
+          ? {
+              high: dayStrategy.supportResistance.nearestResistance ?? price,
+              low: dayStrategy.supportResistance.nearestSupport ?? price,
+              complete: true,
+            }
+          : null,
         news: news.map((n) => ({
           title: n.title,
           url: n.articleUrl,
@@ -159,6 +191,22 @@ export async function GET(
           marketCap: details?.marketCap,
           description: details?.description,
           sicDescription: details?.sicDescription,
+        },
+        dayStrategy: {
+          action: dayStrategy.action,
+          direction: dayStrategy.direction,
+          compositeScore: dayStrategy.compositeScore,
+          summary: dayStrategy.summary,
+          nearestSupport: dayStrategy.supportResistance.nearestSupport ?? undefined,
+          nearestResistance: dayStrategy.supportResistance.nearestResistance ?? undefined,
+          candlePattern: dayStrategy.candlePatterns[0]?.pattern,
+          strategyScores: dayStrategy.strategyScores.map((s) => ({
+            name: s.name,
+            score: s.score,
+            bias: s.bias,
+            detail: s.detail,
+          })),
+          evenRisk: dayStrategy.evenRisk,
         },
       },
       provider

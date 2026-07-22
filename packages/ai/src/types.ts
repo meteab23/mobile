@@ -3,6 +3,7 @@ export interface MoveAnalysis {
     direction: "bullish" | "bearish" | "neutral";
     magnitude: string;
     summary: string;
+    forecast?: string;
   };
   primaryDrivers: Array<{
     driver: string;
@@ -20,6 +21,18 @@ export interface MoveAnalysis {
     orbStatus: string;
     rsi: number;
     strategyAlignment: string;
+    supportResistance?: string;
+    candlePattern?: string;
+    directionForecast?: string;
+    compositeScore?: number;
+  };
+  tradePlan?: {
+    action: string;
+    entry: number;
+    stopLoss: number;
+    takeProfit1: number;
+    takeProfit2: number;
+    riskReward: string;
   };
   risksAndCaveats: string[];
   sources: Array<{ title: string; url: string }>;
@@ -52,6 +65,22 @@ export interface AnalysisInput {
     marketCap?: number;
     description?: string;
     sicDescription?: string;
+  };
+  dayStrategy?: {
+    action: string;
+    direction: string;
+    compositeScore: number;
+    summary: string;
+    nearestSupport?: number;
+    nearestResistance?: number;
+    candlePattern?: string;
+    strategyScores?: Array<{ name: string; score: number; bias: string; detail: string }>;
+    evenRisk?: {
+      entry: number;
+      stopLoss: number;
+      takeProfit1: number;
+      takeProfit2: number;
+    };
   };
 }
 

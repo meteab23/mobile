@@ -1,0 +1,195 @@
+@import "tailwindcss";
+
+/* ============================================================
+   Vela — Design System
+   A blend of Billie's confident B2B fintech energy and
+   OpenAI's calm, editorial minimalism.
+   ============================================================ */
+
+:root {
+  /* Neutrals — warm, paper-like whites and near-blacks (OpenAI feel) */
+  --bg: #fbfbfa;
+  --bg-elevated: #ffffff;
+  --ink: #0b0b0d;
+  --ink-soft: #3a3a40;
+  --ink-muted: #6b6b73;
+  --line: #e7e6e2;
+  --line-strong: #d7d6d1;
+
+  /* Brand — electric violet (Billie-inspired) with soft accents */
+  --brand: #5b34ef;
+  --brand-strong: #4a25d4;
+  --brand-soft: #ede9ff;
+  --brand-ink: #2a1a6b;
+
+  /* Secondary accents */
+  --lime: #c8f051;
+  --mint: #d6f7e6;
+  --peach: #ffe3d1;
+  --sky: #dcecff;
+
+  /* Feedback */
+  --pos: #12855b;
+  --neg: #c53434;
+
+  --radius: 14px;
+  --radius-lg: 22px;
+  --radius-xl: 32px;
+
+  --shadow-sm: 0 1px 2px rgba(11, 11, 13, 0.04),
+    0 1px 3px rgba(11, 11, 13, 0.06);
+  --shadow-md: 0 4px 12px rgba(11, 11, 13, 0.06),
+    0 12px 32px rgba(11, 11, 13, 0.06);
+  --shadow-lg: 0 8px 24px rgba(11, 11, 13, 0.08),
+    0 24px 64px rgba(11, 11, 13, 0.10);
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-bg-elevated: var(--bg-elevated);
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-ink-muted: var(--ink-muted);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+
+  --color-brand: var(--brand);
+  --color-brand-strong: var(--brand-strong);
+  --color-brand-soft: var(--brand-soft);
+  --color-brand-ink: var(--brand-ink);
+
+  --color-lime: var(--lime);
+  --color-mint: var(--mint);
+  --color-peach: var(--peach);
+  --color-sky: var(--sky);
+
+  --color-pos: var(--pos);
+  --color-neg: var(--neg);
+
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+
+  --radius-card: var(--radius);
+  --radius-card-lg: var(--radius-lg);
+  --radius-card-xl: var(--radius-xl);
+}
+
+* {
+  border-color: var(--line);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-sans), ui-sans-serif, system-ui, -apple-system,
+    "Segoe UI", sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Fluid, editorial display type */
+.display {
+  letter-spacing: -0.03em;
+  line-height: 1.02;
+  font-weight: 600;
+}
+
+.eyebrow {
+  font-size: 0.78rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  font-weight: 600;
+  color: var(--ink-muted);
+}
+
+/* Reusable layout container */
+.container-x {
+  width: 100%;
+  max-width: 1200px;
+  margin-inline: auto;
+  padding-inline: 1.5rem;
+}
+
+/* Grid backdrop used in hero/section backgrounds */
+.grid-bg {
+  background-image: linear-gradient(var(--line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--line) 1px, transparent 1px);
+  background-size: 56px 56px;
+  mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, #000 40%, transparent 100%);
+}
+
+.noise {
+  background-image: radial-gradient(
+    circle at 1px 1px,
+    rgba(11, 11, 13, 0.06) 1px,
+    transparent 0
+  );
+  background-size: 18px 18px;
+}
+
+/* Subtle marquee for the logo strip */
+@keyframes marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+.animate-marquee {
+  animation: marquee 32s linear infinite;
+}
+
+@keyframes floaty {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+.animate-floaty {
+  animation: floaty 6s ease-in-out infinite;
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.animate-rise {
+  animation: rise 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Focus ring */
+a:focus-visible,
+button:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+::selection {
+  background: var(--brand);
+  color: #fff;
+}
+
+/* Thin scrollbar for dashboard panes */
+.scroll-slim::-webkit-scrollbar {
+  height: 8px;
+  width: 8px;
+}
+.scroll-slim::-webkit-scrollbar-thumb {
+  background: var(--line-strong);
+  border-radius: 999px;
+}

@@ -2,7 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { getPolygonClient, hasPolygonKey } from "@/lib/polygon";
 import { withPolygonFallback } from "@/lib/polygon-cache";
 import {
+  analyzeDayStrategy,
   analyzeSupportResistance,
+  buildScalpTradeSignal,
   calculateEMA,
   calculateRSI,
   calculateScalpLevels,
@@ -70,6 +72,33 @@ export async function GET(
     const scalpLong = calculateScalpLevels(price, scalpTarget, "long");
     const scalpShort = calculateScalpLevels(price, scalpTarget, "short");
 
+    const avgVolume =
+      dailyBars.length > 0
+        ? dailyBars.reduce((s, b) => s + b.v, 0) / dailyBars.length
+        : 1_000_000;
+    const rev0 = financials[0]?.revenue;
+    const rev1 = financials[1]?.revenue;
+
+    const dayStrategy = analyzeDayStrategy({
+      ticker,
+      candles,
+      previousClose: prevClose,
+      averageVolume: avgVolume,
+      fundamentals: {
+        marketCap: details.marketCap,
+        revenueGrowth: rev0 && rev1 ? ((rev0 - rev1) / rev1) * 100 : undefined,
+        netIncome: financials[0]?.netIncome,
+        sector: details.sicDescription,
+      },
+    });
+
+    const tradeSignal = buildScalpTradeSignal(
+      dayStrategy,
+      scalpLong,
+      scalpShort,
+      scalpTarget
+    );
+
     return NextResponse.json({
       ticker,
       name: details.name ?? ticker,
@@ -100,6 +129,20 @@ export async function GET(
         netIncome: financials[0]?.netIncome,
       },
       scalp: { long: scalpLong, short: scalpShort, targetPercent: scalpTarget },
+      tradeSignal,
+      technicalAnalysis: {
+        compositeScore: dayStrategy.compositeScore,
+        action: dayStrategy.action,
+        direction: dayStrategy.direction,
+        vwap: dayStrategy.vwap,
+        relativeVolume: dayStrategy.relativeVolume,
+        strategyScores: dayStrategy.strategyScores.map((s) => ({
+          name: s.name,
+          score: s.score,
+          bias: s.bias,
+          detail: s.detail,
+        })),
+      },
     });
   } catch (err) {
     return NextResponse.json(
@@ -111,6 +154,19 @@ export async function GET(
 
 function getDemoStock(ticker: string, scalpTarget: ScalpTarget) {
   const price = 100 + ticker.charCodeAt(0);
+  const candles = [
+    { time: Date.now(), open: price * 0.99, high: price * 1.01, low: price * 0.98, close: price, volume: 1e6 },
+  ];
+  const dayStrategy = analyzeDayStrategy({
+    ticker,
+    candles,
+    previousClose: price * 0.99,
+    averageVolume: 1e6,
+  });
+  const scalpLong = calculateScalpLevels(price, scalpTarget, "long");
+  const scalpShort = calculateScalpLevels(price, scalpTarget, "short");
+  const tradeSignal = buildScalpTradeSignal(dayStrategy, scalpLong, scalpShort, scalpTarget);
+
   return {
     ticker,
     name: `${ticker} Inc.`,
@@ -123,9 +179,23 @@ function getDemoStock(ticker: string, scalpTarget: ScalpTarget) {
     dailyBars: [],
     news: [],
     scalp: {
-      long: calculateScalpLevels(price, scalpTarget, "long"),
-      short: calculateScalpLevels(price, scalpTarget, "short"),
+      long: scalpLong,
+      short: scalpShort,
       targetPercent: scalpTarget,
+    },
+    tradeSignal,
+    technicalAnalysis: {
+      compositeScore: dayStrategy.compositeScore,
+      action: dayStrategy.action,
+      direction: dayStrategy.direction,
+      vwap: dayStrategy.vwap,
+      relativeVolume: dayStrategy.relativeVolume,
+      strategyScores: dayStrategy.strategyScores.map((s) => ({
+        name: s.name,
+        score: s.score,
+        bias: s.bias,
+        detail: s.detail,
+      })),
     },
   };
 }

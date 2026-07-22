@@ -35,7 +35,7 @@ export async function GET(
 
   if (cached[0]) {
     const age = Date.now() - new Date(cached[0].createdAt).getTime();
-    if (age < 15 * 60 * 1000) {
+    if (age < 5 * 60 * 1000) {
       return NextResponse.json(JSON.parse(cached[0].payload));
     }
   }

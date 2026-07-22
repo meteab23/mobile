@@ -5,8 +5,27 @@ import Link from "next/link";
 import { DailyChart } from "@/components/simple/DailyChart";
 import { ScalpPanel } from "@/components/simple/ScalpPanel";
 import { TechnicalsPanel } from "@/components/simple/TechnicalsPanel";
+import { TradeSignalPanel } from "@/components/simple/TradeSignalPanel";
+import { SimpleAIAnalysis } from "@/components/simple/SimpleAIAnalysis";
 import { NewsList } from "@/components/simple/NewsList";
 import type { ScalpTarget, ScalpSetup } from "@daytrading/strategy";
+
+interface TradeSignal {
+  signal: "ENTER_LONG" | "ENTER_SHORT" | "WAIT";
+  action: string;
+  side: "long" | "short" | "flat";
+  entry: number;
+  stopLoss: number;
+  takeProfit: number;
+  takeProfit2: number;
+  targetPercent: number;
+  confidence: number;
+  compositeScore: number;
+  summary: string;
+  entryGuide: string;
+  exitGuide: string;
+  checklist: string[];
+}
 
 export default function StockPage({ params }: { params: Promise<{ symbol: string }> }) {
   const { symbol: rawSymbol } = use(params);
@@ -54,6 +73,7 @@ export default function StockPage({ params }: { params: Promise<{ symbol: string
     dailyBars: Array<{ t: number; o: number; h: number; l: number; c: number }>;
     news: Array<{ title: string; url: string; time: string; sentiment?: string }>;
     scalp: { long: ScalpSetup; short: ScalpSetup };
+    tradeSignal: TradeSignal;
   };
 
   const isUp = d.changePercent >= 0;
@@ -83,6 +103,16 @@ export default function StockPage({ params }: { params: Promise<{ symbol: string
           + Wishlist
         </button>
       </header>
+
+      {d.tradeSignal && (
+        <section className="mt-6">
+          <TradeSignalPanel signal={d.tradeSignal} />
+        </section>
+      )}
+
+      <section className="mt-6">
+        <SimpleAIAnalysis ticker={symbol} />
+      </section>
 
       <section className="mt-6">
         <ScalpPanel

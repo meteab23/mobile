@@ -1,0 +1,25 @@
+{
+  "name": "@daytrading/polygon",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "lint": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@polygon.io/client-js": "^7.4.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.2"
+  }
+}

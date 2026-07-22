@@ -1,0 +1,23 @@
+{
+  "name": "day-trading-app",
+  "private": true,
+  "packageManager": "npm@10.9.7",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "turbo dev --parallel",
+    "build": "npm run build -w @daytrading/polygon && npm run build -w @daytrading/strategy && npm run build -w @daytrading/ai && npm run build -w @daytrading/ws-server && npm run build -w @daytrading/web",
+    "lint": "npm run lint -w @daytrading/polygon && npm run lint -w @daytrading/strategy && npm run lint -w @daytrading/ai && npm run lint -w @daytrading/ws-server && npm run lint -w @daytrading/web",
+    "test": "npm run test -w @daytrading/strategy",
+    "db:push": "npm run db:push -w @daytrading/web"
+  },
+  "devDependencies": {
+    "turbo": "^2.3.3",
+    "typescript": "^5.7.2"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

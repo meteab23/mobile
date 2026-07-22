@@ -5,3 +5,4 @@ export * from "./recommendation.js";
 export * from "./support-resistance.js";
 export * from "./candlestick-patterns.js";
 export * from "./day-strategy.js";
+export * from "./scalping.js";

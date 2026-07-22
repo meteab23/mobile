@@ -1,84 +1,85 @@
+"use client";
+
+import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
-import { Watchlist } from "@/components/Watchlist";
-import { Scanner } from "@/components/Scanner";
-import { SignalHistory } from "@/components/SignalHistory";
+import { StockSearch } from "@/components/simple/StockSearch";
+import { Wishlist } from "@/components/simple/Wishlist";
+
+interface Stock {
+  ticker: string;
+  name: string;
+}
 
 export default function HomePage() {
+  const [stocks, setStocks] = useState<Stock[]>([]);
+  const [wishlist, setWishlist] = useState<string[]>([]);
+  const [wishlistKey, setWishlistKey] = useState(0);
+
+  const load = useCallback(async () => {
+    const [pop, wl] = await Promise.all([
+      fetch("/api/stocks/popular").then((r) => r.json()),
+      fetch("/api/watchlist").then((r) => r.json()),
+    ]);
+    setStocks(pop.stocks ?? []);
+    setWishlist(wl.watchlist ?? []);
+  }, []);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  const addStock = async (ticker: string) => {
+    await fetch("/api/watchlist", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ticker }),
+    });
+    setWishlistKey((k) => k + 1);
+    load();
+  };
+
   return (
-    <div className="flex min-h-[calc(100vh-80px)]">
-      <aside className="hidden w-48 shrink-0 md:block lg:w-56">
-        <Watchlist />
-      </aside>
+    <div className="mx-auto max-w-6xl px-4 py-6">
+      <header className="mb-6">
+        <h1 className="text-2xl font-bold text-zinc-100">US Stocks</h1>
+        <p className="text-sm text-zinc-500">Pick stocks, analyze, scalp 2–5% moves</p>
+      </header>
 
-      <main className="flex-1 overflow-y-auto p-4 md:p-6">
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold text-zinc-100">DayTrader Pro</h1>
-          <p className="mt-1 text-sm text-zinc-500">
-            Opening Range Breakout + VWAP strategy with live US market data and AI analysis
-          </p>
-        </div>
+      <div className="mb-6">
+        <StockSearch onAdd={addStock} />
+      </div>
 
-        <div className="mb-6 grid gap-4 lg:grid-cols-3">
-          <Scanner />
-          <SignalHistory />
-          <Link
-            href="/signals"
-            className="rounded-lg border border-emerald-500/30 bg-emerald-500/5 p-4 transition-colors hover:bg-emerald-500/10"
-          >
-            <h2 className="mb-2 text-sm font-semibold uppercase tracking-wider text-emerald-400">
-              Buy Signal Scanner
-            </h2>
-            <p className="text-sm text-zinc-400">
-              Analyze top 10 US stocks — see which to BUY, WAIT, or AVOID based on live ORB + VWAP
-              strategy. Refresh to update.
-            </p>
-            <span className="mt-3 inline-block text-sm font-medium text-emerald-400">
-              Open Buy Signals →
-            </span>
-          </Link>
-        </div>
-
-        <div className="mb-6 rounded-lg border border-zinc-800 bg-zinc-950 p-4">
-          <h2 className="mb-3 text-sm font-semibold uppercase tracking-wider text-zinc-500">
-            Quick Start
+      <div className="grid gap-6 lg:grid-cols-3">
+        <div className="lg:col-span-2">
+          <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-zinc-500">
+            Popular US Stocks
           </h2>
-            <ol className="list-decimal space-y-2 pl-4 text-sm text-zinc-400">
-              <li>Add your <code className="text-emerald-400">POLYGON_API_KEY</code> to <code className="text-zinc-300">.env</code></li>
-              <li>Start the WebSocket server: <code className="text-zinc-300">npm run dev -w @daytrading/ws-server</code></li>
-              <li>Select a ticker from watchlist or scanner</li>
-              <li>Watch for ORB breakout signals with TP/SL levels</li>
-              <li>Use AI Analysis to understand why a stock moved</li>
-            </ol>
-        </div>
-
-        <div className="rounded-lg border border-zinc-800 bg-zinc-950 p-4">
-          <h2 className="mb-3 text-sm font-semibold uppercase tracking-wider text-zinc-500">
-            Popular Tickers
-          </h2>
-          <div className="flex flex-wrap gap-2">
-            {["AAPL", "TSLA", "NVDA", "MSFT", "AMD", "META", "GOOGL", "AMZN", "SPY", "QQQ"].map(
-              (t) => (
-                <Link
-                  key={t}
-                  href={`/ticker/${t}`}
-                  className="rounded bg-zinc-800 px-3 py-1.5 font-mono text-sm text-zinc-300 hover:bg-emerald-600 hover:text-white"
-                >
-                  {t}
-                </Link>
-              )
-            )}
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">
+            {stocks.map((s) => (
+              <Link
+                key={s.ticker}
+                href={`/stock/${s.ticker}`}
+                className="group rounded-xl border border-zinc-800 bg-zinc-900/40 p-3 transition-colors hover:border-emerald-500/40 hover:bg-zinc-900"
+              >
+                <div className="font-mono font-bold text-zinc-100 group-hover:text-emerald-400">
+                  {s.ticker}
+                </div>
+                <div className="truncate text-xs text-zinc-600">{s.name}</div>
+                {wishlist.includes(s.ticker) && (
+                  <div className="mt-1 text-xs text-emerald-500">★ Wishlist</div>
+                )}
+              </Link>
+            ))}
           </div>
         </div>
 
-        <div className="mt-6 rounded-lg border border-zinc-800 bg-zinc-900/30 p-4">
-          <h2 className="mb-2 text-sm font-semibold text-zinc-400">Strategy: ORB + VWAP</h2>
-          <p className="text-sm text-zinc-500">
-            Trades opening range breakouts (first 15 min) confirmed by VWAP position, relative
-            volume (&gt;1.5x), and RSI filter (40–70). Stop loss at opposite OR boundary. Take
-            profit at 1.5R and 2.5R.
-          </p>
+        <div className="rounded-xl border border-zinc-800 bg-zinc-900/40 p-4">
+          <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-zinc-500">
+            My Wishlist
+          </h2>
+          <Wishlist refreshKey={wishlistKey} />
         </div>
-      </main>
+      </div>
     </div>
   );
 }

@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { DisclaimerBanner } from "@/components/DisclaimerBanner";
-import { MarketStatusBar } from "@/components/MarketStatusBar";
-import { AppNav } from "@/components/AppNav";
+import { MacroBar } from "@/components/simple/MacroBar";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -16,8 +15,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "DayTrader Pro — ORB + VWAP Signals",
-  description: "US stock day trading dashboard with live market data, ORB+VWAP strategy signals, and AI analysis",
+  title: "US Stocks — Scalp & Trade",
+  description: "Simple US stock screener with wishlist, technicals, news, and 2-5% scalp targets",
 };
 
 export default function RootLayout({
@@ -31,8 +30,7 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} min-h-screen bg-zinc-950 text-zinc-100 antialiased`}
       >
         <DisclaimerBanner />
-        <MarketStatusBar />
-        <AppNav />
+        <MacroBar />
         {children}
       </body>
     </html>

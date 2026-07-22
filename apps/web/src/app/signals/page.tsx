@@ -1,5 +1,5 @@
-import { BuySignalsTab } from "@/components/BuySignalsTab";
+import { redirect } from "next/navigation";
 
-export default function BuySignalsPage() {
-  return <BuySignalsTab />;
+export default function SignalsPage() {
+  redirect("/");
 }

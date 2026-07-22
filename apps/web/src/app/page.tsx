@@ -21,10 +21,27 @@ export default function HomePage() {
         <div className="mb-6 grid gap-4 lg:grid-cols-3">
           <Scanner />
           <SignalHistory />
-          <div className="rounded-lg border border-zinc-800 bg-zinc-950 p-4">
-            <h2 className="mb-3 text-sm font-semibold uppercase tracking-wider text-zinc-500">
-              Quick Start
+          <Link
+            href="/signals"
+            className="rounded-lg border border-emerald-500/30 bg-emerald-500/5 p-4 transition-colors hover:bg-emerald-500/10"
+          >
+            <h2 className="mb-2 text-sm font-semibold uppercase tracking-wider text-emerald-400">
+              Buy Signal Scanner
             </h2>
+            <p className="text-sm text-zinc-400">
+              Analyze top 10 US stocks — see which to BUY, WAIT, or AVOID based on live ORB + VWAP
+              strategy. Refresh to update.
+            </p>
+            <span className="mt-3 inline-block text-sm font-medium text-emerald-400">
+              Open Buy Signals →
+            </span>
+          </Link>
+        </div>
+
+        <div className="mb-6 rounded-lg border border-zinc-800 bg-zinc-950 p-4">
+          <h2 className="mb-3 text-sm font-semibold uppercase tracking-wider text-zinc-500">
+            Quick Start
+          </h2>
             <ol className="list-decimal space-y-2 pl-4 text-sm text-zinc-400">
               <li>Add your <code className="text-emerald-400">POLYGON_API_KEY</code> to <code className="text-zinc-300">.env</code></li>
               <li>Start the WebSocket server: <code className="text-zinc-300">npm run dev -w @daytrading/ws-server</code></li>
@@ -32,7 +49,6 @@ export default function HomePage() {
               <li>Watch for ORB breakout signals with TP/SL levels</li>
               <li>Use AI Analysis to understand why a stock moved</li>
             </ol>
-          </div>
         </div>
 
         <div className="rounded-lg border border-zinc-800 bg-zinc-950 p-4">

@@ -20,6 +20,7 @@ interface Snapshot {
   preMarketLow?: number | null;
   marketCap?: number;
   float?: number;
+  planNote?: string;
 }
 
 function formatNumber(n: number, decimals = 2): string {
@@ -92,6 +93,7 @@ export function KeyStats({ ticker }: { ticker: string }) {
       {stats.float != null && (
         <Stat label="Float" value={`${(stats.float / 1e9).toFixed(2)}B`} />
       )}
+      </div>
     </div>
   );
 }

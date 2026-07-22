@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { DisclaimerBanner } from "@/components/DisclaimerBanner";
 import { MarketStatusBar } from "@/components/MarketStatusBar";
+import { AppNav } from "@/components/AppNav";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -31,6 +32,7 @@ export default function RootLayout({
       >
         <DisclaimerBanner />
         <MarketStatusBar />
+        <AppNav />
         {children}
       </body>
     </html>

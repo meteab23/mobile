@@ -58,7 +58,11 @@ export class PolygonClient {
       to,
       { adjusted: "true", sort: "asc", limit }
     );
-    const results = res.results ?? [];
+    const payload = res as { status?: string; error?: string; message?: string; results?: Array<{ t?: number; o?: number; h?: number; l?: number; c?: number; v?: number; vw?: number; n?: number }> };
+    if (payload.status === "ERROR" || payload.status === "NOT_AUTHORIZED") {
+      throw new Error(payload.error ?? payload.message ?? "Polygon aggregates request failed");
+    }
+    const results = payload.results ?? [];
     return results.map((b) => ({
       t: b.t ?? 0,
       o: b.o ?? 0,
@@ -86,20 +90,20 @@ export class PolygonClient {
     const res = await this.client.stocks.previousClose(ticker, {
       adjusted: "true",
     });
-    return res.results?.[0]?.c ?? 0;
+    const payload = res as { status?: string; error?: string; message?: string; results?: Array<{ c?: number }> };
+    if (payload.status === "ERROR" || payload.status === "NOT_AUTHORIZED") {
+      throw new Error(payload.error ?? payload.message ?? "Polygon previous close failed");
+    }
+    return payload.results?.[0]?.c ?? 0;
   }
 
   async getSnapshot(ticker: string): Promise<TickerSnapshot> {
     const res = await this.client.stocks.snapshotTicker(ticker);
-    const data = res as {
-      ticker?: string;
-      day?: { o: number; h: number; l: number; c: number; v: number };
-      prevDay?: { c: number };
-      min?: { c: number; v: number };
-      todaysChange?: number;
-      todaysChangePerc?: number;
-      lastTrade?: { p: number };
-    };
+    const payload = res as { status?: string; error?: string; message?: string; ticker?: string; day?: { o: number; h: number; l: number; c: number; v: number }; prevDay?: { c: number }; min?: { c: number; v: number }; todaysChange?: number; todaysChangePerc?: number; lastTrade?: { p: number } };
+    if (payload.status === "ERROR" || payload.status === "NOT_AUTHORIZED") {
+      throw new Error(payload.error ?? payload.message ?? "Polygon snapshot not available on your plan");
+    }
+    const data = payload;
 
     const price =
       data.lastTrade?.p ?? data.min?.c ?? data.day?.c ?? data.prevDay?.c ?? 0;

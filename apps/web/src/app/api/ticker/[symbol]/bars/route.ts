@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getPolygonClient, hasPolygonKey } from "@/lib/polygon";
+import { parsePolygonError, withPolygonFallback } from "@/lib/polygon-cache";
 
 export async function GET(
   req: NextRequest,
@@ -33,13 +34,15 @@ export async function GET(
           to.toISOString().slice(0, 10),
           60
         );
-        planNote =
-          "Your Polygon plan does not include minute bars — showing daily candles.";
+        planNote = "Your Polygon plan does not include minute bars — showing daily candles.";
       } catch {
-        const prevClose = await client.getPreviousClose(ticker);
+        const prevClose = await withPolygonFallback(
+          () => client.getPreviousClose(ticker),
+          100,
+          `prev-close-${ticker}`
+        );
         bars = synthesizeFromPrice(ticker, prevClose, multiplier);
-        planNote =
-          "Rate limited or plan restricted — showing approximate chart from previous close.";
+        planNote = "Using previous close data — Polygon rate limit or plan restriction.";
       }
     }
 
@@ -49,10 +52,10 @@ export async function GET(
       planNote,
     });
   } catch (err) {
-    return NextResponse.json(
-      { error: err instanceof Error ? err.message : "Failed to fetch bars" },
-      { status: 500 }
-    );
+    return NextResponse.json({
+      bars: generateDemoBars(ticker, multiplier),
+      planNote: parsePolygonError(err),
+    });
   }
 }
 

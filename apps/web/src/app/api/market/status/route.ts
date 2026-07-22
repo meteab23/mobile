@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { PolygonClient } from "@daytrading/polygon";
 import { getPolygonClient, hasPolygonKey } from "@/lib/polygon";
+import { parsePolygonError, withPolygonFallback } from "@/lib/polygon-cache";
 
 export async function GET() {
   if (!hasPolygonKey()) {
@@ -16,7 +17,20 @@ export async function GET() {
 
   try {
     const client = getPolygonClient();
-    const status = await client.getMarketStatus();
+    const status = await withPolygonFallback(
+      () => client.getMarketStatus(),
+      {
+        market: "unknown",
+        serverTime: new Date().toISOString(),
+        exchanges: { nasdaq: "closed", nyse: "closed", otc: "closed" },
+        currencies: { crypto: "closed", fx: "closed" },
+        earlyHours: false,
+        afterHours: false,
+        session: "closed" as const,
+      },
+      "market-status"
+    );
+
     const countdown = getCountdown(status.session);
 
     return NextResponse.json({
@@ -27,7 +41,7 @@ export async function GET() {
     });
   } catch (err) {
     return NextResponse.json(
-      { error: err instanceof Error ? err.message : "Failed to fetch market status" },
+      { error: parsePolygonError(err) },
       { status: 500 }
     );
   }

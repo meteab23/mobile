@@ -7,6 +7,8 @@ import {
   calculateVWAP,
   barsToCandles,
 } from "@daytrading/strategy";
+import { parsePolygonError, withPolygonFallback } from "@/lib/polygon-cache";
+import type { TickerDetails } from "@daytrading/polygon";
 
 export async function GET(
   _req: NextRequest,
@@ -21,8 +23,18 @@ export async function GET(
 
   try {
     const client = getPolygonClient();
-    const details = await client.getTickerDetails(ticker).catch(() => null);
-    const prevClose = await client.getPreviousClose(ticker);
+
+    const prevClose = await withPolygonFallback(
+      () => client.getPreviousClose(ticker),
+      0,
+      `prev-close-${ticker}`
+    );
+
+    const details = await withPolygonFallback<TickerDetails | null>(
+      () => client.getTickerDetails(ticker),
+      null,
+      `details-${ticker}`
+    );
 
     let snapshot = null;
     try {
@@ -54,7 +66,11 @@ export async function GET(
 
     let avgVolume = 0;
     try {
-      avgVolume = await client.getAverageVolume(ticker);
+      avgVolume = await withPolygonFallback(
+        () => client.getAverageVolume(ticker),
+        bars.length ? bars.reduce((s, b) => s + b.v, 0) / bars.length : 0,
+        `avg-vol-${ticker}`
+      );
     } catch {
       avgVolume = bars.length
         ? bars.reduce((s, b) => s + b.v, 0) / bars.length
@@ -88,9 +104,9 @@ export async function GET(
 
     const planNote =
       !snapshot && bars.length === 0
-        ? "Limited plan — showing previous close data. Upgrade Polygon for live snapshots."
+        ? "Limited plan — showing previous close. Upgrade Polygon for live data."
         : !snapshot
-          ? "Limited plan — minute data unavailable, using daily bars where possible."
+          ? "Minute data unavailable on your plan — using daily bars."
           : undefined;
 
     return NextResponse.json({
@@ -126,7 +142,7 @@ export async function GET(
     });
   } catch (err) {
     return NextResponse.json(
-      { error: err instanceof Error ? err.message : "Failed to fetch snapshot" },
+      { error: parsePolygonError(err) || "Failed to fetch snapshot" },
       { status: 500 }
     );
   }

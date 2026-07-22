@@ -12,6 +12,7 @@
   "dependencies": {
     "@daytrading/polygon": "*",
     "@daytrading/strategy": "*",
+    "dotenv": "^16.6.1",
     "ws": "^8.18.0"
   },
   "devDependencies": {

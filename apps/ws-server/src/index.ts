@@ -1,10 +1,15 @@
 import { WebSocketServer, WebSocket } from "ws";
+import { config } from "dotenv";
+import { resolve } from "path";
 import { createPolygonClient } from "@daytrading/polygon";
 import {
   OrbVwapStrategy,
   barsToCandles,
   type StrategySignal,
 } from "@daytrading/strategy";
+
+config({ path: resolve(process.cwd(), "../../.env") });
+config({ path: resolve(process.cwd(), ".env") });
 
 const PORT = Number(process.env.WS_PORT ?? 3001);
 const apiKey = process.env.POLYGON_API_KEY ?? "";

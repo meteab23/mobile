@@ -56,7 +56,13 @@ export function KeyStats({ ticker }: { ticker: string }) {
   const isPositive = stats.changePercent >= 0;
 
   return (
-    <div className="grid grid-cols-2 gap-3 p-4 md:grid-cols-4 lg:grid-cols-6">
+    <div>
+      {stats.planNote && (
+        <div className="mx-4 mt-3 rounded border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-300">
+          {stats.planNote}
+        </div>
+      )}
+      <div className="grid grid-cols-2 gap-3 p-4 md:grid-cols-4 lg:grid-cols-6">
       <Stat label="Price" value={`$${formatNumber(stats.price)}`} highlight />
       <Stat
         label="Change"

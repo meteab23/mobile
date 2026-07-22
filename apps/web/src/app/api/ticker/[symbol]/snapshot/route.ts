@@ -1,6 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getPolygonClient, hasPolygonKey } from "@/lib/polygon";
-import { calculateGapPercent, calculateRelativeVolume, calculateRSI, calculateVWAP, barsToCandles } from "@daytrading/strategy";
+import {
+  calculateGapPercent,
+  calculateRelativeVolume,
+  calculateRSI,
+  calculateVWAP,
+  barsToCandles,
+} from "@daytrading/strategy";
 
 export async function GET(
   _req: NextRequest,
@@ -15,54 +21,108 @@ export async function GET(
 
   try {
     const client = getPolygonClient();
-    const [snapshot, details, avgVolume, bars, prevClose] = await Promise.all([
-      client.getSnapshot(ticker),
-      client.getTickerDetails(ticker).catch(() => null),
-      client.getAverageVolume(ticker),
-      client.getTodayAggregates(ticker, 1, "minute"),
-      client.getPreviousClose(ticker),
-    ]);
+    const details = await client.getTickerDetails(ticker).catch(() => null);
+    const prevClose = await client.getPreviousClose(ticker);
+
+    let snapshot = null;
+    try {
+      snapshot = await client.getSnapshot(ticker);
+    } catch {
+      /* snapshot not included in plan */
+    }
+
+    let bars: Awaited<ReturnType<typeof client.getTodayAggregates>> = [];
+    try {
+      bars = await client.getTodayAggregates(ticker, 1, "minute");
+    } catch {
+      try {
+        const to = new Date();
+        const from = new Date();
+        from.setDate(from.getDate() - 30);
+        bars = await client.getAggregates(
+          ticker,
+          1,
+          "day",
+          from.toISOString().slice(0, 10),
+          to.toISOString().slice(0, 10),
+          30
+        );
+      } catch {
+        /* use prev close only */
+      }
+    }
+
+    let avgVolume = 0;
+    try {
+      avgVolume = await client.getAverageVolume(ticker);
+    } catch {
+      avgVolume = bars.length
+        ? bars.reduce((s, b) => s + b.v, 0) / bars.length
+        : 0;
+    }
+
+    const price = snapshot?.price ?? prevClose;
+    const prev = snapshot?.prevClose ?? prevClose;
+    const change = snapshot?.change ?? price - prev;
+    const changePercent =
+      snapshot?.changePercent ?? (prev ? ((price - prev) / prev) * 100 : 0);
 
     const candles = barsToCandles(bars);
-    const vwap = calculateVWAP(candles);
-    const rsi = calculateRSI(candles);
-    const gapPercent = calculateGapPercent(snapshot.price, prevClose || snapshot.prevClose);
-    const relativeVolume = calculateRelativeVolume(snapshot.dayVolume, avgVolume);
+    const vwap = candles.length ? calculateVWAP(candles) : price;
+    const rsi = candles.length ? calculateRSI(candles) : 50;
+    const dayVolume = snapshot?.dayVolume ?? bars.at(-1)?.v ?? 0;
+    const gapPercent = calculateGapPercent(price, prev);
+    const relativeVolume = calculateRelativeVolume(dayVolume, avgVolume || dayVolume);
 
     const preMarketBars = bars.filter((b) => {
-      const d = new Date(b.t);
-      const et = d.toLocaleString("en-US", { timeZone: "America/New_York", hour: "numeric", minute: "numeric", hour12: false });
+      const et = new Date(b.t).toLocaleString("en-US", {
+        timeZone: "America/New_York",
+        hour: "numeric",
+        minute: "numeric",
+        hour12: false,
+      });
       const [h, m] = et.split(":").map(Number);
       const mins = h * 60 + m;
       return mins >= 240 && mins < 570;
     });
 
-    const preMarketHigh = preMarketBars.length ? Math.max(...preMarketBars.map((b) => b.h)) : null;
-    const preMarketLow = preMarketBars.length ? Math.min(...preMarketBars.map((b) => b.l)) : null;
+    const planNote =
+      !snapshot && bars.length === 0
+        ? "Limited plan — showing previous close data. Upgrade Polygon for live snapshots."
+        : !snapshot
+          ? "Limited plan — minute data unavailable, using daily bars where possible."
+          : undefined;
 
     return NextResponse.json({
       ticker,
-      price: snapshot.price,
-      change: snapshot.change,
-      changePercent: snapshot.changePercent,
-      dayOpen: snapshot.dayOpen,
-      dayHigh: snapshot.dayHigh,
-      dayLow: snapshot.dayLow,
-      dayVolume: snapshot.dayVolume,
-      prevClose: prevClose || snapshot.prevClose,
+      price,
+      change,
+      changePercent,
+      dayOpen: snapshot?.dayOpen ?? bars.at(-1)?.o ?? price,
+      dayHigh: snapshot?.dayHigh ?? bars.at(-1)?.h ?? price,
+      dayLow: snapshot?.dayLow ?? bars.at(-1)?.l ?? price,
+      dayVolume,
+      prevClose: prev,
       gapPercent,
       relativeVolume,
       avgVolume,
       vwap,
       rsi,
-      preMarketHigh,
-      preMarketLow,
+      preMarketHigh: preMarketBars.length
+        ? Math.max(...preMarketBars.map((b) => b.h))
+        : null,
+      preMarketLow: preMarketBars.length
+        ? Math.min(...preMarketBars.map((b) => b.l))
+        : null,
       marketCap: details?.marketCap,
-      float: details?.weightedSharesOutstanding ?? details?.shareClassSharesOutstanding,
+      float:
+        details?.weightedSharesOutstanding ??
+        details?.shareClassSharesOutstanding,
       name: details?.name ?? ticker,
       description: details?.description,
       sicDescription: details?.sicDescription,
       dataMode: client.getDataMode(),
+      planNote,
     });
   } catch (err) {
     return NextResponse.json(
@@ -73,7 +133,7 @@ export async function GET(
 }
 
 function getDemoSnapshot(ticker: string) {
-  const base = 100 + ticker.charCodeAt(0) % 50;
+  const base = 100 + (ticker.charCodeAt(0) % 50);
   return {
     ticker,
     price: base,

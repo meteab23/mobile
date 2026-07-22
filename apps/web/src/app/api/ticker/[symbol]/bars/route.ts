@@ -8,7 +8,6 @@ export async function GET(
   const { symbol } = await params;
   const ticker = symbol.toUpperCase();
   const multiplier = Number(req.nextUrl.searchParams.get("multiplier") ?? 1);
-  const timespan = (req.nextUrl.searchParams.get("timespan") ?? "minute") as "minute" | "hour";
 
   if (!hasPolygonKey()) {
     return NextResponse.json({ bars: generateDemoBars(ticker, multiplier) });
@@ -16,14 +15,64 @@ export async function GET(
 
   try {
     const client = getPolygonClient();
-    const bars = await client.getTodayAggregates(ticker, multiplier, timespan);
-    return NextResponse.json({ bars, dataMode: client.getDataMode() });
+    let bars: Array<{ t: number; o: number; h: number; l: number; c: number; v: number }> = [];
+    let planNote: string | undefined;
+
+    try {
+      bars = await client.getTodayAggregates(ticker, multiplier, "minute");
+    } catch {
+      const to = new Date();
+      const from = new Date();
+      from.setDate(from.getDate() - 60);
+      try {
+        bars = await client.getAggregates(
+          ticker,
+          1,
+          "day",
+          from.toISOString().slice(0, 10),
+          to.toISOString().slice(0, 10),
+          60
+        );
+        planNote =
+          "Your Polygon plan does not include minute bars — showing daily candles.";
+      } catch {
+        const prevClose = await client.getPreviousClose(ticker);
+        bars = synthesizeFromPrice(ticker, prevClose, multiplier);
+        planNote =
+          "Rate limited or plan restricted — showing approximate chart from previous close.";
+      }
+    }
+
+    return NextResponse.json({
+      bars,
+      dataMode: client.getDataMode(),
+      planNote,
+    });
   } catch (err) {
     return NextResponse.json(
       { error: err instanceof Error ? err.message : "Failed to fetch bars" },
       { status: 500 }
     );
   }
+}
+
+function synthesizeFromPrice(ticker: string, price: number, multiplier: number) {
+  const base = price || 100 + (ticker.charCodeAt(0) % 30);
+  const now = Date.now();
+  const bars = [];
+  for (let i = 30; i >= 0; i--) {
+    const t = now - i * multiplier * 60_000 * 60 * 24;
+    const o = base + Math.sin(i / 5) * (base * 0.01);
+    bars.push({
+      t,
+      o,
+      h: o + base * 0.005,
+      l: o - base * 0.005,
+      c: o + (Math.sin(i) * base * 0.002),
+      v: 1_000_000,
+    });
+  }
+  return bars;
 }
 
 function generateDemoBars(ticker: string, multiplier: number) {

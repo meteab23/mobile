@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { calculatePaymentTerms } from "@/lib/calculations";
 import { feeCalculationSchema } from "@/lib/validations";
 
+export const runtime = "edge";
+
 export async function POST(request: Request) {
   try {
     const body: unknown = await request.json();

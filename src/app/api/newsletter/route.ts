@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { newsletterSchema } from "@/lib/validations";
 
+export const runtime = "edge";
+
 // In-memory store for demo purposes
 const subscribers = new Set<string>();
 

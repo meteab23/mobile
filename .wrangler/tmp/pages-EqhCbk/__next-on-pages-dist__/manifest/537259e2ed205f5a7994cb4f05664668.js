@@ -1,1 +1,0 @@
-var _={},e=(a,s,t)=>(_.__NEXT_FONT_MANIFEST=a.__NEXT_FONT_MANIFEST='{"pages":{},"app":{"/workspace/src/app/layout":["static/media/463dafcda517f24f-s.p.woff","static/media/4473ecc91f70f139-s.p.woff"]},"appUsingSizeAdjust":true,"pagesUsingSizeAdjust":false}',_.__REACT_LOADABLE_MANIFEST=a.__REACT_LOADABLE_MANIFEST="{}",_);export{e as __getNamedExports};

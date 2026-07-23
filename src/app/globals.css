@@ -1,0 +1,67 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #faf9f5;
+  --foreground: #0f0f11;
+  --muted: #f1efe8;
+  --muted-foreground: #5c5c66;
+  --card: #ffffff;
+  --card-foreground: #0f0f11;
+  --border: rgba(23, 23, 23, 0.1);
+  --ring: #0f0f11;
+  --accent: #10b981;
+  --accent-foreground: #ffffff;
+}
+
+.dark {
+  --background: #09090b;
+  --foreground: #fafafa;
+  --muted: #18181b;
+  --muted-foreground: #a1a1aa;
+  --card: #0f0f12;
+  --card-foreground: #fafafa;
+  --border: rgba(255, 255, 255, 0.1);
+  --ring: #fafafa;
+  --accent: #34d399;
+  --accent-foreground: #09090b;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .glass {
+    @apply backdrop-blur-md bg-white/70 dark:bg-black/70;
+  }
+
+  .mesh-gradient {
+    background:
+      radial-gradient(ellipse 80% 50% at 20% 40%, rgba(16, 185, 129, 0.12), transparent),
+      radial-gradient(ellipse 60% 40% at 80% 20%, rgba(139, 92, 246, 0.08), transparent),
+      radial-gradient(ellipse 50% 60% at 50% 80%, rgba(16, 185, 129, 0.06), transparent);
+  }
+
+  .dark .mesh-gradient {
+    background:
+      radial-gradient(ellipse 80% 50% at 20% 40%, rgba(16, 185, 129, 0.15), transparent),
+      radial-gradient(ellipse 60% 40% at 80% 20%, rgba(139, 92, 246, 0.1), transparent),
+      radial-gradient(ellipse 50% 60% at 50% 80%, rgba(16, 185, 129, 0.08), transparent);
+  }
+}

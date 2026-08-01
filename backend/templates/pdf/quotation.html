@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>{{ quotation.quotation_number }} — {{ company.name }}</title>
+  <style>
+    @page {
+      size: A4;
+      margin: 18mm 16mm 22mm 16mm;
+
+      @top-center {
+        content: "";
+      }
+
+      @bottom-left {
+        content: "{{ company.name }}  ·  {{ company.vat_number }}";
+        font-size: 8pt;
+        color: #64748b;
+        font-family: "DejaVu Sans", sans-serif;
+      }
+
+      @bottom-center {
+        content: "Page " counter(page) " of " counter(pages);
+        font-size: 8pt;
+        color: #64748b;
+        font-family: "DejaVu Sans", sans-serif;
+      }
+
+      @bottom-right {
+        content: "{{ quotation.quotation_number }}";
+        font-size: 8pt;
+        color: #64748b;
+        font-family: "DejaVu Sans", sans-serif;
+      }
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      font-family: "DejaVu Sans", Helvetica, Arial, sans-serif;
+      font-size: 9.5pt;
+      color: #0f172a;
+      line-height: 1.45;
+    }
+
+    .header {
+      display: table;
+      width: 100%;
+      border-bottom: 3px solid #1e3a5f;
+      padding-bottom: 12px;
+      margin-bottom: 18px;
+    }
+
+    .header-left, .header-right {
+      display: table-cell;
+      vertical-align: top;
+      width: 50%;
+    }
+
+    .header-right { text-align: right; }
+
+    .logo-mark {
+      display: inline-block;
+      width: 42px;
+      height: 42px;
+      background: #1e3a5f;
+      color: #fff;
+      font-weight: 700;
+      font-size: 14pt;
+      text-align: center;
+      line-height: 42px;
+      border-radius: 6px;
+      margin-right: 10px;
+      vertical-align: middle;
+    }
+
+    .company-name {
+      display: inline-block;
+      vertical-align: middle;
+      font-size: 14pt;
+      font-weight: 700;
+      color: #1e3a5f;
+      letter-spacing: 0.2px;
+    }
+
+    .company-tagline {
+      font-size: 8pt;
+      color: #64748b;
+      margin-top: 2px;
+    }
+
+    .company-meta {
+      font-size: 8pt;
+      color: #475569;
+      margin-top: 8px;
+      line-height: 1.5;
+    }
+
+    .doc-title {
+      font-size: 18pt;
+      font-weight: 700;
+      color: #1e3a5f;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      margin: 0 0 6px 0;
+    }
+
+    .doc-number {
+      font-size: 11pt;
+      font-weight: 700;
+      color: #0f172a;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 3px;
+      font-size: 8pt;
+      font-weight: 700;
+      text-transform: uppercase;
+      background: #e2e8f0;
+      color: #334155;
+      margin-top: 6px;
+    }
+
+    .badge-sent { background: #dbeafe; color: #1d4ed8; }
+    .badge-approved { background: #dcfce7; color: #15803d; }
+    .badge-rejected { background: #fee2e2; color: #b91c1c; }
+    .badge-converted { background: #fef3c7; color: #b45309; }
+    .badge-draft { background: #f1f5f9; color: #475569; }
+
+    .meta-grid {
+      display: table;
+      width: 100%;
+      margin-bottom: 16px;
+      border-collapse: separate;
+      border-spacing: 0 0;
+    }
+
+    .meta-col {
+      display: table-cell;
+      width: 50%;
+      vertical-align: top;
+      padding: 10px 12px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+    }
+
+    .meta-col + .meta-col { border-left: none; }
+
+    .meta-label {
+      font-size: 7.5pt;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      color: #64748b;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .meta-value {
+      font-size: 10pt;
+      font-weight: 600;
+      color: #0f172a;
+    }
+
+    .meta-sub {
+      font-size: 8.5pt;
+      color: #475569;
+      margin-top: 3px;
+    }
+
+    table.items {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 4px;
+      table-layout: fixed;
+    }
+
+    table.items thead {
+      display: table-header-group;
+    }
+
+    table.items th {
+      background: #1e3a5f;
+      color: #fff;
+      font-size: 7.5pt;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      padding: 7px 6px;
+      text-align: left;
+      font-weight: 700;
+      border: 1px solid #1e3a5f;
+    }
+
+    table.items th.num, table.items td.num {
+      text-align: right;
+    }
+
+    table.items th.center, table.items td.center {
+      text-align: center;
+    }
+
+    table.items td {
+      padding: 8px 6px;
+      border: 1px solid #cbd5e1;
+      vertical-align: top;
+      font-size: 8.5pt;
+      word-wrap: break-word;
+      overflow-wrap: break-word;
+    }
+
+    table.items tr {
+      page-break-inside: avoid;
+    }
+
+    table.items tbody tr:nth-child(even) td {
+      background: #f8fafc;
+    }
+
+    .item-title {
+      font-weight: 700;
+      color: #0f172a;
+      margin-bottom: 2px;
+    }
+
+    .item-desc {
+      color: #475569;
+      font-size: 8pt;
+      line-height: 1.35;
+    }
+
+    .col-no { width: 5%; }
+    .col-desc { width: 42%; }
+    .col-qty { width: 8%; }
+    .col-price { width: 15%; }
+    .col-disc { width: 10%; }
+    .col-total { width: 20%; }
+
+    .totals-wrap {
+      display: table;
+      width: 100%;
+      margin-top: 14px;
+      page-break-inside: avoid;
+    }
+
+    .totals-notes {
+      display: table-cell;
+      width: 55%;
+      vertical-align: top;
+      padding-right: 16px;
+    }
+
+    .totals-box {
+      display: table-cell;
+      width: 45%;
+      vertical-align: top;
+    }
+
+    .totals-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .totals-table td {
+      padding: 5px 8px;
+      font-size: 9pt;
+      border-bottom: 1px solid #e2e8f0;
+    }
+
+    .totals-table td.label {
+      color: #475569;
+      text-align: left;
+    }
+
+    .totals-table td.amount {
+      text-align: right;
+      font-weight: 600;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .totals-table tr.grand td {
+      background: #1e3a5f;
+      color: #fff;
+      font-size: 11pt;
+      font-weight: 700;
+      border: none;
+      padding: 8px;
+    }
+
+    .section-title {
+      font-size: 9pt;
+      font-weight: 700;
+      color: #1e3a5f;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin: 16px 0 6px;
+      border-bottom: 1px solid #cbd5e1;
+      padding-bottom: 3px;
+    }
+
+    .notes, .terms {
+      font-size: 8pt;
+      color: #334155;
+      white-space: pre-wrap;
+      line-height: 1.4;
+    }
+
+    .signatures {
+      display: table;
+      width: 100%;
+      margin-top: 28px;
+      page-break-inside: avoid;
+    }
+
+    .sig-col {
+      display: table-cell;
+      width: 48%;
+      vertical-align: top;
+    }
+
+    .sig-col + .sig-col { padding-left: 4%; }
+
+    .sig-line {
+      border-top: 1px solid #94a3b8;
+      margin-top: 48px;
+      padding-top: 6px;
+      font-size: 8pt;
+      color: #475569;
+    }
+
+    .vat-summary {
+      font-size: 8pt;
+      color: #64748b;
+      margin-top: 8px;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="header-left">
+      <span class="logo-mark">GH</span>
+      <span class="company-name">{{ company.name }}</span>
+      <div class="company-tagline">{{ company.tagline }}</div>
+      <div class="company-meta">
+        {{ company.address }}<br/>
+        Tel: {{ company.phone }} &nbsp;|&nbsp; {{ company.email }}<br/>
+        Trade License: {{ company.trade_license }} &nbsp;|&nbsp; VAT: {{ company.vat_number }}
+      </div>
+    </div>
+    <div class="header-right">
+      <div class="doc-title">Quotation</div>
+      <div class="doc-number">{{ quotation.quotation_number }}</div>
+      <div class="badge badge-{{ quotation.status }}">{{ quotation.get_status_display }}</div>
+      <div class="company-meta" style="margin-top:10px;">
+        Date: <strong>{{ quotation.date|date:"d M Y" }}</strong><br/>
+        Valid Until: <strong>{{ quotation.valid_until|date:"d M Y" }}</strong><br/>
+        Currency: <strong>{{ quotation.currency }}</strong>
+      </div>
+    </div>
+  </div>
+
+  <div class="meta-grid">
+    <div class="meta-col">
+      <div class="meta-label">Bill To / Customer</div>
+      <div class="meta-value">{{ customer.company_name }}</div>
+      <div class="meta-sub">
+        {{ customer.address }}<br/>
+        Attn: {{ customer.contact_person }}{% if customer.contact_title %}, {{ customer.contact_title }}{% endif %}<br/>
+        Tel: {{ customer.phone }} &nbsp;|&nbsp; {{ customer.email }}<br/>
+        Trade License: {{ customer.trade_license }}<br/>
+        VAT: {{ customer.vat_number }}
+      </div>
+    </div>
+    <div class="meta-col">
+      <div class="meta-label">Prepared By</div>
+      <div class="meta-value">{{ salesperson.get_full_name|default:salesperson.username }}</div>
+      <div class="meta-sub">
+        {{ salesperson.job_title|default:"Sales" }}<br/>
+        {{ salesperson.email }}{% if salesperson.phone %}<br/>{{ salesperson.phone }}{% endif %}<br/><br/>
+        Payment Terms: <strong>{{ customer.get_payment_terms_display }}</strong><br/>
+        Credit Limit: AED {{ customer.credit_limit|floatformat:0 }}
+      </div>
+    </div>
+  </div>
+
+  <table class="items">
+    <thead>
+      <tr>
+        <th class="col-no center">#</th>
+        <th class="col-desc">Description / Specification</th>
+        <th class="col-qty center">Qty</th>
+        <th class="col-price num">Unit Price</th>
+        <th class="col-disc num">Disc %</th>
+        <th class="col-total num">Line Total</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in items %}
+      <tr>
+        <td class="center">{{ forloop.counter }}</td>
+        <td>
+          <div class="item-title">{{ item.truck.brand }} {{ item.truck.model }} ({{ item.truck.year }})</div>
+          <div class="item-desc">{{ item.description }}</div>
+        </td>
+        <td class="center">{{ item.quantity }}</td>
+        <td class="num">{{ quotation.currency }} {{ item.unit_price|floatformat:2 }}</td>
+        <td class="num">{{ item.discount_percent|floatformat:1 }}%</td>
+        <td class="num">{{ quotation.currency }} {{ item.line_total|floatformat:2 }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <div class="totals-wrap">
+    <div class="totals-notes">
+      {% if quotation.notes %}
+      <div class="section-title">Notes</div>
+      <div class="notes">{{ quotation.notes }}</div>
+      {% endif %}
+      <div class="vat-summary">
+        VAT Summary: Taxable amount after discount · Rate {{ vat_rate_pct|floatformat:0 }}% ·
+        VAT AED {{ quotation.vat_amount|floatformat:2 }}
+      </div>
+    </div>
+    <div class="totals-box">
+      <table class="totals-table">
+        <tr>
+          <td class="label">Subtotal</td>
+          <td class="amount">{{ quotation.currency }} {{ quotation.subtotal|floatformat:2 }}</td>
+        </tr>
+        <tr>
+          <td class="label">Discount</td>
+          <td class="amount">− {{ quotation.currency }} {{ quotation.discount_amount|floatformat:2 }}</td>
+        </tr>
+        <tr>
+          <td class="label">VAT ({{ vat_rate_pct|floatformat:0 }}%)</td>
+          <td class="amount">{{ quotation.currency }} {{ quotation.vat_amount|floatformat:2 }}</td>
+        </tr>
+        <tr class="grand">
+          <td class="label">Grand Total</td>
+          <td class="amount">{{ quotation.currency }} {{ quotation.grand_total|floatformat:2 }}</td>
+        </tr>
+      </table>
+    </div>
+  </div>
+
+  {% if quotation.terms_and_conditions %}
+  <div class="section-title">Terms &amp; Conditions</div>
+  <div class="terms">{{ quotation.terms_and_conditions }}</div>
+  {% endif %}
+
+  <div class="signatures">
+    <div class="sig-col">
+      <div class="sig-line">
+        Authorized Signature — {{ company.name }}<br/>
+        Name / Date
+      </div>
+    </div>
+    <div class="sig-col">
+      <div class="sig-line">
+        Customer Acceptance — {{ customer.company_name }}<br/>
+        Name / Date / Stamp
+      </div>
+    </div>
+  </div>
+</body>
+</html>

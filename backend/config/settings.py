@@ -18,7 +18,17 @@ SECRET_KEY = os.getenv(
 
 DEBUG = os.getenv("DJANGO_DEBUG", "true").lower() == "true"
 
-ALLOWED_HOSTS = os.getenv("DJANGO_ALLOWED_HOSTS", "localhost,127.0.0.1,0.0.0.0").split(",")
+ALLOWED_HOSTS = [
+    h.strip()
+    for h in os.getenv(
+        "DJANGO_ALLOWED_HOSTS",
+        "localhost,127.0.0.1,0.0.0.0,.trycloudflare.com,.cursor.com",
+    ).split(",")
+    if h.strip()
+]
+if DEBUG:
+    # Allow cloud preview / tunnel hosts during local demo
+    ALLOWED_HOSTS = list({*ALLOWED_HOSTS, "*"})
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -119,11 +129,17 @@ MEDIA_ROOT = BASE_DIR / "media"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # CORS
-CORS_ALLOWED_ORIGINS = os.getenv(
-    "CORS_ALLOWED_ORIGINS",
-    "http://localhost:5173,http://127.0.0.1:5173,http://localhost:3000",
-).split(",")
+CORS_ALLOWED_ORIGINS = [
+    o.strip()
+    for o in os.getenv(
+        "CORS_ALLOWED_ORIGINS",
+        "http://localhost:5173,http://127.0.0.1:5173,http://localhost:3000",
+    ).split(",")
+    if o.strip()
+]
 CORS_ALLOW_CREDENTIALS = True
+if DEBUG:
+    CORS_ALLOW_ALL_ORIGINS = True
 
 # DRF
 REST_FRAMEWORK = {

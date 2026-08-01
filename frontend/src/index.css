@@ -1,0 +1,68 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --steel-950: #0a2438;
+  --steel-900: #0b3d5c;
+  --amber: #f4b942;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: 'DM Sans', system-ui, sans-serif;
+  color: #1a2332;
+  background: #e8eef4;
+  -webkit-font-smoothing: antialiased;
+}
+
+@layer utilities {
+  .animate-rise {
+    animation: rise 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  .animate-drawer {
+    animation: drawer-in 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  .animate-fade {
+    animation: fade-in 0.3s ease both;
+  }
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes drawer-in {
+  from {
+    opacity: 0;
+    transform: translateX(40px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}

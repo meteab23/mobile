@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>{{ quotation.quote_number }} — Commercial Truck Quotation</title>
+  <style>
+    @page {
+      size: A4;
+      margin: 18mm 14mm 22mm 14mm;
+
+      @top-center {
+        content: element(running-header);
+        width: 100%;
+      }
+
+      @bottom-left {
+        content: "Gulf Sino Trucks Trading LLC · TRN {{ dealership.trn }}";
+        font-size: 8pt;
+        color: #5c6570;
+        font-family: "DejaVu Sans", sans-serif;
+      }
+
+      @bottom-right {
+        content: "Page " counter(page) " of " counter(pages);
+        font-size: 8pt;
+        color: #5c6570;
+        font-family: "DejaVu Sans", sans-serif;
+      }
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: "DejaVu Sans", Helvetica, Arial, sans-serif;
+      font-size: 9.5pt;
+      color: #1a2332;
+      line-height: 1.45;
+    }
+
+    .running-header {
+      position: running(running-header);
+      width: 100%;
+      border-bottom: 2.5pt solid #0b3d5c;
+      padding-bottom: 6pt;
+      margin-bottom: 0;
+    }
+
+    .header-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .logo-box {
+      width: 52px;
+      height: 52px;
+      background: linear-gradient(145deg, #0b3d5c 0%, #1a6b8a 100%);
+      color: #f4b942;
+      font-weight: 700;
+      font-size: 11pt;
+      text-align: center;
+      vertical-align: middle;
+      line-height: 52px;
+      border-radius: 4px;
+    }
+
+    .brand-block {
+      padding-left: 10pt;
+      vertical-align: middle;
+    }
+
+    .brand-name {
+      font-size: 14pt;
+      font-weight: 700;
+      color: #0b3d5c;
+      letter-spacing: 0.02em;
+      margin: 0;
+    }
+
+    .brand-tag {
+      font-size: 7.5pt;
+      color: #5c6570;
+      margin: 1pt 0 0;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .trn-block {
+      text-align: right;
+      vertical-align: middle;
+      font-size: 8pt;
+      color: #3a4450;
+    }
+
+    .trn-block strong {
+      color: #0b3d5c;
+      font-size: 9pt;
+    }
+
+    .doc-title {
+      margin: 14pt 0 10pt;
+      text-align: center;
+    }
+
+    .doc-title h1 {
+      margin: 0;
+      font-size: 16pt;
+      color: #0b3d5c;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    .doc-title .quote-meta {
+      margin-top: 4pt;
+      font-size: 9pt;
+      color: #5c6570;
+    }
+
+    .meta-grid {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 12pt;
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+
+    .meta-grid td {
+      width: 50%;
+      vertical-align: top;
+      padding: 0;
+    }
+
+    .info-card {
+      border: 1pt solid #d5dde5;
+      padding: 8pt 10pt;
+      background: #f7f9fb;
+    }
+
+    .info-card.right {
+      margin-left: 8pt;
+    }
+
+    .info-card.left {
+      margin-right: 8pt;
+    }
+
+    .info-card h3 {
+      margin: 0 0 5pt;
+      font-size: 8pt;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: #c47a12;
+      border-bottom: 1pt solid #e8edf2;
+      padding-bottom: 3pt;
+    }
+
+    .info-card p {
+      margin: 2pt 0;
+      font-size: 9pt;
+    }
+
+    .label {
+      color: #5c6570;
+      display: inline-block;
+      min-width: 72pt;
+    }
+
+    /* Specs table — repeating headers across pages */
+    .specs-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 4pt;
+      table-layout: fixed;
+    }
+
+    .specs-table thead {
+      display: table-header-group;
+    }
+
+    .specs-table tfoot {
+      display: table-footer-group;
+    }
+
+    .specs-table th {
+      background: #0b3d5c;
+      color: #ffffff;
+      font-size: 8pt;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 6pt 5pt;
+      text-align: left;
+      border: 0.5pt solid #0b3d5c;
+    }
+
+    .specs-table td {
+      border: 0.5pt solid #cfd8e3;
+      padding: 6pt 5pt;
+      vertical-align: top;
+      font-size: 8.5pt;
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+
+    .specs-table tbody tr {
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+
+    .specs-table tbody tr:nth-child(even) {
+      background: #f4f7fa;
+    }
+
+    .col-no { width: 4%; text-align: center; }
+    .col-model { width: 28%; }
+    .col-specs { width: 34%; }
+    .col-qty { width: 7%; text-align: center; }
+    .col-unit { width: 13%; text-align: right; }
+    .col-total { width: 14%; text-align: right; }
+
+    .truck-brand {
+      font-weight: 700;
+      color: #0b3d5c;
+      font-size: 9pt;
+    }
+
+    .truck-model {
+      font-size: 8pt;
+      color: #3a4450;
+      margin-top: 1pt;
+    }
+
+    .drive-badge {
+      display: inline-block;
+      margin-top: 3pt;
+      background: #f4b942;
+      color: #1a2332;
+      font-size: 7pt;
+      font-weight: 700;
+      padding: 1pt 5pt;
+      border-radius: 2pt;
+    }
+
+    .spec-list {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .spec-list li {
+      margin: 0 0 1.5pt;
+      padding-left: 0;
+      font-size: 7.5pt;
+      color: #3a4450;
+      break-inside: avoid;
+    }
+
+    .spec-list li strong {
+      color: #1a2332;
+    }
+
+    .notes {
+      margin-top: 3pt;
+      font-size: 7.5pt;
+      color: #0b3d5c;
+      font-style: italic;
+    }
+
+    .totals-wrap {
+      width: 100%;
+      margin-top: 12pt;
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+
+    .totals-table {
+      width: 42%;
+      margin-left: auto;
+      border-collapse: collapse;
+    }
+
+    .totals-table td {
+      padding: 4pt 6pt;
+      font-size: 9pt;
+      border-bottom: 0.5pt solid #e0e6ed;
+    }
+
+    .totals-table td:last-child {
+      text-align: right;
+      font-weight: 600;
+    }
+
+    .totals-table .vat-row td {
+      color: #5c6570;
+    }
+
+    .totals-table .grand-row td {
+      background: #0b3d5c;
+      color: #ffffff;
+      font-size: 11pt;
+      font-weight: 700;
+      border: none;
+      padding: 7pt 6pt;
+    }
+
+    .vat-note {
+      margin-top: 6pt;
+      font-size: 7.5pt;
+      color: #5c6570;
+      text-align: right;
+    }
+
+    .terms {
+      margin-top: 14pt;
+      break-inside: avoid;
+      page-break-inside: avoid;
+      border-top: 1pt solid #d5dde5;
+      padding-top: 8pt;
+    }
+
+    .terms h3 {
+      margin: 0 0 4pt;
+      font-size: 8pt;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #0b3d5c;
+    }
+
+    .terms ul {
+      margin: 0;
+      padding-left: 14pt;
+      font-size: 7.5pt;
+      color: #3a4450;
+    }
+
+    .terms li {
+      margin-bottom: 2pt;
+    }
+
+    .signature-block {
+      margin-top: 18pt;
+      width: 100%;
+      border-collapse: collapse;
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+
+    .signature-block td {
+      width: 50%;
+      vertical-align: top;
+      padding: 0 6pt;
+    }
+
+    .sig-box {
+      border: 1.5pt dashed #9aabbc;
+      height: 90pt;
+      padding: 8pt;
+      position: relative;
+    }
+
+    .sig-box h4 {
+      margin: 0;
+      font-size: 8pt;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #5c6570;
+    }
+
+    .sig-line {
+      margin-top: 52pt;
+      border-top: 0.75pt solid #9aabbc;
+      padding-top: 3pt;
+      font-size: 7.5pt;
+      color: #5c6570;
+    }
+
+    .stamp-placeholder {
+      position: absolute;
+      right: 10pt;
+      top: 28pt;
+      width: 58pt;
+      height: 58pt;
+      border: 1.5pt solid #c47a12;
+      border-radius: 50%;
+      color: #c47a12;
+      font-size: 6.5pt;
+      text-align: center;
+      line-height: 1.2;
+      padding-top: 16pt;
+      opacity: 0.75;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+  </style>
+</head>
+<body>
+  <!-- Running header for every page via CSS Paged Media -->
+  <div class="running-header">
+    <table class="header-table">
+      <tr>
+        <td style="width: 56px; vertical-align: middle;">
+          <div class="logo-box">GST</div>
+        </td>
+        <td class="brand-block">
+          <p class="brand-name">{{ dealership.name }}</p>
+          <p class="brand-tag">Chinese Commercial Trucks · UAE Fleet Import Specialist</p>
+        </td>
+        <td class="trn-block">
+          <strong>TRN: {{ dealership.trn }}</strong><br />
+          {{ dealership.address_line1 }}<br />
+          {{ dealership.address_line2 }}<br />
+          {{ dealership.phone }} · {{ dealership.email }}
+        </td>
+      </tr>
+    </table>
+  </div>
+
+  <div class="doc-title">
+    <h1>Commercial Truck Quotation</h1>
+    <div class="quote-meta">
+      Quote No. <strong>{{ quotation.quote_number }}</strong>
+      &nbsp;·&nbsp;
+      Date: {{ quotation.created_at|date:"d M Y" }}
+      &nbsp;·&nbsp;
+      Valid Until: <strong>{{ quotation.valid_until|date:"d M Y" }}</strong> (15 Days)
+    </div>
+  </div>
+
+  <table class="meta-grid">
+    <tr>
+      <td>
+        <div class="info-card left">
+          <h3>Bill To / Client</h3>
+          <p><span class="label">Contact</span> {{ quotation.client_name }}</p>
+          <p><span class="label">Company</span> <strong>{{ quotation.company_name }}</strong></p>
+          <p><span class="label">Phone</span> {{ quotation.client_phone }}</p>
+          <p><span class="label">Email</span> {{ quotation.client_email }}</p>
+        </div>
+      </td>
+      <td>
+        <div class="info-card right">
+          <h3>Commercial Terms</h3>
+          <p><span class="label">Currency</span> AED (United Arab Emirates Dirham)</p>
+          <p><span class="label">VAT</span> 5% UAE FTA Compliant</p>
+          <p><span class="label">Validity</span> 15 calendar days from issue date</p>
+          <p><span class="label">Incoterms</span> Ex-Yard Dubai Maritime City</p>
+        </div>
+      </td>
+    </tr>
+  </table>
+
+  <table class="specs-table">
+    <thead>
+      <tr>
+        <th class="col-no">#</th>
+        <th class="col-model">Truck Model</th>
+        <th class="col-specs">Technical Specifications</th>
+        <th class="col-qty">Qty</th>
+        <th class="col-unit">Unit Price (AED)</th>
+        <th class="col-total">Line Total (AED)</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in items %}
+      <tr>
+        <td class="col-no">{{ forloop.counter }}</td>
+        <td class="col-model">
+          <div class="truck-brand">{{ item.truck.brand }}</div>
+          <div class="truck-model">{{ item.truck.model_name }}</div>
+          <span class="drive-badge">{{ item.truck.drive_type }}</span>
+          <div style="margin-top: 3pt; font-size: 7.5pt; color: #5c6570;">
+            {{ item.truck.horsepower }} HP · {{ item.truck.emission_standard }}
+          </div>
+        </td>
+        <td class="col-specs">
+          <ul class="spec-list">
+            <li><strong>Engine:</strong> {{ item.truck.engine_model }}</li>
+            <li><strong>Transmission:</strong> {{ item.truck.transmission }}</li>
+            {% for label, value in item.truck.specs_display %}
+            <li><strong>{{ label }}:</strong> {{ value }}</li>
+            {% endfor %}
+          </ul>
+          {% if item.custom_notes %}
+          <div class="notes">Add-ons: {{ item.custom_notes }}</div>
+          {% endif %}
+        </td>
+        <td class="col-qty">{{ item.quantity }}</td>
+        <td class="col-unit">{{ item.unit_selling_price_aed|floatformat:2 }}</td>
+        <td class="col-total"><strong>{{ item.line_total|floatformat:2 }}</strong></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <div class="totals-wrap">
+    <table class="totals-table">
+      <tr>
+        <td>Subtotal (AED)</td>
+        <td>{{ quotation.subtotal_aed|floatformat:2 }}</td>
+      </tr>
+      <tr class="vat-row">
+        <td>UAE VAT 5% (AED)</td>
+        <td>{{ quotation.vat_aed|floatformat:2 }}</td>
+      </tr>
+      <tr class="grand-row">
+        <td>Grand Total (AED)</td>
+        <td>{{ quotation.total_price_aed|floatformat:2 }}</td>
+      </tr>
+    </table>
+    <p class="vat-note">
+      VAT calculated at 5% in accordance with UAE Federal Tax Authority (FTA) regulations.
+    </p>
+  </div>
+
+  <div class="terms">
+    <h3>Terms &amp; Conditions</h3>
+    <ul>
+      <li>This quotation is valid for <strong>15 days</strong> from the date of issue unless otherwise withdrawn in writing.</li>
+      <li>Prices are in AED, inclusive of UAE VAT at 5%, and exclude RTA registration fees unless noted in add-ons.</li>
+      <li>Delivery: Ex-yard Dubai Maritime City. Lead time subject to VIN allocation and inspection clearance.</li>
+      <li>Payment: 30% deposit on PO, balance prior to release. Bank transfer in AED preferred.</li>
+      <li>Warranty as per manufacturer GCC terms; optional service packages available on request.</li>
+    </ul>
+  </div>
+
+  <table class="signature-block">
+    <tr>
+      <td>
+        <div class="sig-box">
+          <h4>Authorized Signature — Dealership</h4>
+          <div class="stamp-placeholder">Official<br />Stamp</div>
+          <div class="sig-line">Name / Designation / Date</div>
+        </div>
+      </td>
+      <td>
+        <div class="sig-box">
+          <h4>Client Acceptance</h4>
+          <div class="sig-line">Name / Company Stamp / Date</div>
+        </div>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
